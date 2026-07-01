@@ -18,8 +18,21 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin User',
+            'email' => 'admin@evalflow.com',
+            'role' => 'admin',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Evaluator User',
+            'email' => 'evaluator@evalflow.com',
+            'role' => 'evaluator',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Student User',
+            'email' => 'student@evalflow.com',
+            'role' => 'student',
         ]);
     }
 }
