@@ -16,9 +16,9 @@ Route::get('/dashboard', function () {
 
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\AdminExamController::class, 'dashboard'])->name('dashboard');
+    Route::post('/courses', [\App\Http\Controllers\AdminExamController::class, 'storeCourse'])->name('courses.store');
+    Route::post('/exams', [\App\Http\Controllers\AdminExamController::class, 'storeExam'])->name('exams.store');
 });
 
 // Evaluator Routes
