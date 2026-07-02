@@ -30,9 +30,8 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->
 
 // Student Routes
 Route::middleware(['auth', 'verified', 'role:student'])->prefix('student')->name('student.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('student.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\StudentExamController::class, 'dashboard'])->name('dashboard');
+    Route::post('/scripts/{exam}/upload', [\App\Http\Controllers\StudentExamController::class, 'uploadScript'])->name('scripts.upload');
 });
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
