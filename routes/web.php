@@ -23,9 +23,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
 // Evaluator Routes
 Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->name('evaluator.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('evaluator.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\EvaluatorScriptController::class, 'dashboard'])->name('dashboard');
+    Route::get('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'show'])->name('scripts.show');
+    Route::post('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'storeMarks'])->name('scripts.storeMarks');
 });
 
 // Student Routes
