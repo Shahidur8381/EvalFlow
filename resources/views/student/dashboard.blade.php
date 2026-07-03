@@ -1,54 +1,140 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Student Dashboard') }}
-        </h2>
-    </x-slot>
+    <x-slot name="header">My Exams</x-slot>
+    <x-slot name="subheader">View your exam schedule, question papers, and submission status.</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                    {{ session('success') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                    {{ session('error') }}
-                </div>
-            @endif
+    @php
+        $activeExams = $exams->filter(fn($e) => now() >= $e->start_time && now() <= $e->end_time);
+        $upcomingExams = $exams->filter(fn($e) => now() < $e->start_time);
+        $pastExams = $exams->filter(fn($e) => now() > $e->end_time);
+    @endphp
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-lg font-bold mb-4">Available Exams</h3>
-                @if($exams->isEmpty())
-                    <p class="text-gray-500">No exams available at the moment.</p>
-                @else
-                    <div class="space-y-4">
-                        @foreach($exams as $exam)
-                            <div class="border p-4 rounded-lg shadow-sm">
-                                <h4 class="font-bold text-md">{{ $exam->title }} <span class="text-sm font-normal text-gray-500">({{ $exam->course->code ?? 'No Course' }})</span></h4>
-                                <p class="text-sm text-gray-600">Marks: {{ $exam->total_marks }} | Window: {{ $exam->start_time->format('M d, g:i A') }} to {{ $exam->end_time->format('M d, g:i A') }}</p>
-                                
-                                <div class="mt-4">
-                                    @if(in_array($exam->id, $submittedScriptExamIds))
-                                        <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">Submitted</span>
-                                    @elseif(now() < $exam->start_time)
-                                        <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">Starts soon</span>
-                                    @elseif(now() > $exam->end_time)
-                                        <span class="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">Ended</span>
-                                    @else
-                                        <form action="{{ route('student.scripts.upload', $exam) }}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-4">
-                                            @csrf
-                                            <input type="file" name="answer_script" accept=".pdf" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                                            <x-primary-button>Upload PDF</x-primary-button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
+    <!-- Stats -->
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-value">{{ $activeExams->count() }}</div>
+            <div class="stat-label">Active Now</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔜</div>
+            <div class="stat-value">{{ $upcomingExams->count() }}</div>
+            <div class="stat-label">Upcoming</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value">{{ $myScripts->count() }}</div>
+            <div class="stat-label">Submitted</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-value">{{ $myScripts->where('status','evaluated')->count() }}</div>
+            <div class="stat-label">Evaluated</div>
         </div>
     </div>
+
+    <!-- Active Exams -->
+    @if($activeExams->isNotEmpty())
+    <div class="card" style="border-left:4px solid #10b981">
+        <div class="card-header"><h3>🟢 Active Exams — Upload Now!</h3></div>
+        @foreach($activeExams as $exam)
+        @php $myScript = $myScripts->get($exam->id); @endphp
+        <div style="padding:20px 24px;border-bottom:1px solid var(--border)">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="font-bold" style="font-size:1.05rem">{{ $exam->title }}</div>
+                    <div class="text-sm text-muted mt-1">{{ $exam->course->name ?? '' }} · {{ $exam->questions->count() }} questions · {{ $exam->total_marks }} marks</div>
+                    <div class="text-sm text-muted mt-1">Closes: {{ $exam->end_time->format('M d, Y g:i A') }}</div>
+                </div>
+                <div class="flex gap-2 items-center">
+                    @if($myScript)
+                        <span class="badge badge-green">✓ Submitted</span>
+                    @else
+                        <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-primary btn-sm">View Paper & Upload</a>
+                    @endif
+                </div>
+            </div>
+            @if($myScript)
+            <div class="mt-2" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;font-size:.85rem;color:#166534">
+                ✅ You submitted your answer script on {{ $myScript->created_at->format('M d g:i A') }}.
+                @if($myScript->status === 'evaluated')
+                    <strong>Result: {{ $myScript->marks_obtained }}/{{ $exam->total_marks }}</strong>
+                @else
+                    Awaiting evaluation.
+                @endif
+            </div>
+            @endif
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    <!-- Upcoming Exams -->
+    @if($upcomingExams->isNotEmpty())
+    <div class="card">
+        <div class="card-header"><h3>🔜 Upcoming Exams</h3></div>
+        @foreach($upcomingExams as $exam)
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div class="font-bold">{{ $exam->title }}</div>
+                <div class="text-sm text-muted mt-1">{{ $exam->course->name ?? '' }} · {{ $exam->questions->count() }} questions · {{ $exam->total_marks }} marks</div>
+                <div class="text-sm text-muted">Starts: {{ $exam->start_time->format('M d, Y g:i A') }}</div>
+            </div>
+            <div class="flex gap-2">
+                <span class="badge badge-yellow">Upcoming</span>
+                <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-outline btn-xs">Preview Paper</a>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    <!-- Past Exams -->
+    @if($pastExams->isNotEmpty())
+    <div class="card">
+        <div class="card-header"><h3>📁 Past Exams</h3></div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Exam</th><th>Course</th><th>Ended</th><th>Status</th><th>Result</th></tr>
+                </thead>
+                <tbody>
+                    @foreach($pastExams as $exam)
+                    @php $myScript = $myScripts->get($exam->id); @endphp
+                    <tr>
+                        <td class="font-bold">{{ $exam->title }}</td>
+                        <td><span class="badge badge-blue">{{ $exam->course->code ?? '—' }}</span></td>
+                        <td class="text-sm text-muted">{{ $exam->end_time->format('M d, Y') }}</td>
+                        <td>
+                            @if(!$myScript)
+                                <span class="badge badge-red">Not Submitted</span>
+                            @elseif($myScript->status === 'evaluated')
+                                <span class="badge badge-green">Evaluated</span>
+                            @else
+                                <span class="badge badge-yellow">Pending</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($myScript && $myScript->status === 'evaluated')
+                                <strong>{{ $myScript->marks_obtained }}/{{ $exam->total_marks }}</strong>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    @if($exams->isEmpty())
+    <div class="card">
+        <div class="card-body text-muted" style="text-align:center;padding:60px">
+            <div style="font-size:3rem;margin-bottom:16px">📋</div>
+            <div class="font-bold" style="font-size:1.1rem">No exams scheduled yet</div>
+            <div class="mt-1">Check back later or contact your administrator.</div>
+        </div>
+    </div>
+    @endif
 </x-app-layout>
