@@ -1,101 +1,166 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Admin Dashboard') }}
-        </h2>
-    </x-slot>
+    <x-slot name="header">Admin Dashboard</x-slot>
+    <x-slot name="subheader">Manage courses, exams, and evaluator assignments.</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                    {{ session('success') }}
-                </div>
-            @endif
+    @php
+        $activeExams   = $exams->filter(fn($e) => now() >= $e->start_time && now() <= $e->end_time)->count();
+        $pastExams     = $exams->filter(fn($e) => now() > $e->end_time)->count();
+        $upcomingExams = $exams->filter(fn($e) => now() < $e->start_time)->count();
+    @endphp
 
-            @if ($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                    <ul class="list-disc pl-5">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value">{{ $exams->count() }}</div>
+            <div class="stat-label">Total Exams</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-value">{{ $activeExams }}</div>
+            <div class="stat-label">Active Now</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔜</div>
+            <div class="stat-value">{{ $upcomingExams }}</div>
+            <div class="stat-label">Upcoming</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-value">{{ $courses->count() }}</div>
+            <div class="stat-label">Courses</div>
+        </div>
+    </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-lg font-bold mb-4">Create Course</h3>
-                <form action="{{ route('admin.courses.store') }}" method="POST" class="space-y-4">
+    <div class="grid-2">
+        <!-- Create Course -->
+        <div class="card">
+            <div class="card-header"><h3>➕ Create Course</h3></div>
+            <div class="card-body">
+                <form action="{{ route('admin.courses.store') }}" method="POST">
                     @csrf
-                    <div>
-                        <x-input-label for="name" :value="__('Course Name')" />
-                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" required />
+                    <div class="form-group">
+                        <label class="form-label">Course Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Mathematics" value="{{ old('name') }}" required>
+                        @error('name')<div class="form-error">{{ $message }}</div>@enderror
                     </div>
-                    <div>
-                        <x-input-label for="code" :value="__('Course Code')" />
-                        <x-text-input id="code" name="code" type="text" class="mt-1 block w-full" required />
+                    <div class="form-group">
+                        <label class="form-label">Course Code</label>
+                        <input type="text" name="code" class="form-control" placeholder="e.g. MATH101" value="{{ old('code') }}" required>
+                        @error('code')<div class="form-error">{{ $message }}</div>@enderror
                     </div>
-                    <x-primary-button>{{ __('Create Course') }}</x-primary-button>
+                    <button type="submit" class="btn btn-primary w-full">Create Course</button>
                 </form>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-lg font-bold mb-4">Create Exam</h3>
-                <form action="{{ route('admin.exams.store') }}" method="POST" class="space-y-4">
-                    @csrf
-                    <div>
-                        <x-input-label for="course_id" :value="__('Course')" />
-                        <select id="course_id" name="course_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" required>
-                            @foreach($courses as $course)
-                                <option value="{{ $course->id }}">{{ $course->name }} ({{ $course->code }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <x-input-label for="title" :value="__('Exam Title')" />
-                        <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" required />
-                    </div>
-                    <div>
-                        <x-input-label for="total_marks" :value="__('Total Marks')" />
-                        <x-text-input id="total_marks" name="total_marks" type="number" value="100" class="mt-1 block w-full" required />
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <x-input-label for="start_time" :value="__('Start Time')" />
-                            <x-text-input id="start_time" name="start_time" type="datetime-local" class="mt-1 block w-full" required />
-                        </div>
-                        <div>
-                            <x-input-label for="end_time" :value="__('End Time')" />
-                            <x-text-input id="end_time" name="end_time" type="datetime-local" class="mt-1 block w-full" required />
-                        </div>
-                    </div>
-                    <x-primary-button>{{ __('Create Exam') }}</x-primary-button>
-                </form>
-            </div>
-
-            <!-- List of All Exams -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 mt-6">
-                <h3 class="text-lg font-bold mb-4">All Exams (Current & Past)</h3>
-                @if($exams->isEmpty())
-                    <p class="text-gray-500">No exams have been created yet.</p>
-                @else
-                    <div class="space-y-4">
-                        @foreach($exams as $exam)
-                            <div class="border p-4 rounded-lg shadow-sm">
-                                <h4 class="font-bold text-md">{{ $exam->title }} <span class="text-sm font-normal text-gray-500">({{ $exam->course->code ?? 'No Course' }})</span></h4>
-                                <p class="text-sm text-gray-600">Marks: {{ $exam->total_marks }} | Start: {{ $exam->start_time->format('M d, Y g:i A') }} | End: {{ $exam->end_time->format('M d, Y g:i A') }}</p>
-                                @if(now() < $exam->start_time)
-                                    <span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 mt-2 rounded text-xs font-semibold">Upcoming</span>
-                                @elseif(now() > $exam->end_time)
-                                    <span class="inline-block bg-gray-200 text-gray-800 px-2 py-1 mt-2 rounded text-xs font-semibold">Ended</span>
-                                @else
-                                    <span class="inline-block bg-green-100 text-green-800 px-2 py-1 mt-2 rounded text-xs font-semibold">Active Now</span>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
             </div>
         </div>
+
+        <!-- Create Exam -->
+        <div class="card">
+            <div class="card-header"><h3>📝 Create New Exam</h3></div>
+            <div class="card-body">
+                <form action="{{ route('admin.exams.store') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label class="form-label">Course</label>
+                        <select name="course_id" class="form-control" required>
+                            <option value="">— Select Course —</option>
+                            @foreach($courses as $course)
+                                <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
+                                    {{ $course->name }} ({{ $course->code }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('course_id')<div class="form-error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Exam Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Mid-term Exam 2026" value="{{ old('title') }}" required>
+                        @error('title')<div class="form-error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Start Time</label>
+                            <input type="datetime-local" name="start_time" class="form-control" value="{{ old('start_time') }}" required>
+                            @error('start_time')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Time</label>
+                            <input type="datetime-local" name="end_time" class="form-control" value="{{ old('end_time') }}" required>
+                            @error('end_time')<div class="form-error">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Create Exam</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Exams Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📋 All Exams</h3>
+            <span class="text-muted text-sm">{{ $exams->count() }} total</span>
+        </div>
+        @if($exams->isEmpty())
+            <div class="card-body text-muted">No exams created yet. Use the form above to get started.</div>
+        @else
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Course</th>
+                        <th>Questions</th>
+                        <th>Total Marks</th>
+                        <th>Window</th>
+                        <th>Status</th>
+                        <th>Evaluator</th>
+                        <th>Submissions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($exams as $exam)
+                    <tr>
+                        <td class="font-bold">{{ $exam->title }}</td>
+                        <td><span class="badge badge-blue">{{ $exam->course->code ?? '—' }}</span></td>
+                        <td>{{ $exam->questions->count() }}</td>
+                        <td>{{ $exam->total_marks }}</td>
+                        <td class="text-sm text-muted">
+                            {{ $exam->start_time->format('M d, g:i A') }}<br>
+                            <span style="color:#94a3b8">→</span> {{ $exam->end_time->format('M d, g:i A') }}
+                        </td>
+                        <td>
+                            @if(now() < $exam->start_time)
+                                <span class="badge badge-yellow">Upcoming</span>
+                            @elseif(now() > $exam->end_time)
+                                <span class="badge badge-gray">Ended</span>
+                            @else
+                                <span class="badge badge-green">Active</span>
+                            @endif
+                        </td>
+                        <td class="text-sm">
+                            @if($exam->assignedEvaluator)
+                                <span class="badge badge-purple">{{ $exam->assignedEvaluator->name }}</span>
+                            @else
+                                <span class="text-muted">Unassigned</span>
+                            @endif
+                        </td>
+                        <td>{{ $exam->scripts->count() }}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <a href="{{ route('admin.exams.show', $exam) }}" class="btn btn-outline btn-xs">Manage</a>
+                                <form action="{{ route('admin.exams.destroy', $exam) }}" method="POST" onsubmit="return confirm('Delete this exam and all submissions?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
 </x-app-layout>

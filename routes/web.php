@@ -9,30 +9,57 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;
-    if ($role === 'admin') return redirect()->route('admin.dashboard');
+    if ($role === 'admin')     return redirect()->route('admin.dashboard');
     if ($role === 'evaluator') return redirect()->route('evaluator.dashboard');
     return redirect()->route('student.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Admin Routes
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+/* ─────────────────────────────── ADMIN ─────────────────────────── */
+Route::middleware(['auth', 'verified', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+
     Route::get('/dashboard', [\App\Http\Controllers\AdminExamController::class, 'dashboard'])->name('dashboard');
+
+    // Courses
     Route::post('/courses', [\App\Http\Controllers\AdminExamController::class, 'storeCourse'])->name('courses.store');
-    Route::post('/exams', [\App\Http\Controllers\AdminExamController::class, 'storeExam'])->name('exams.store');
+
+    // Exams
+    Route::post('/exams', [\App\Http\Controllers\AdminExamController::class, 'storeExam'])
+        ->middleware('exam.time')
+        ->name('exams.store');
+    Route::get('/exams/{exam}', [\App\Http\Controllers\AdminExamController::class, 'showExam'])->name('exams.show');
+    Route::delete('/exams/{exam}', [\App\Http\Controllers\AdminExamController::class, 'destroyExam'])->name('exams.destroy');
+
+    // Questions
+    Route::post('/exams/{exam}/questions', [\App\Http\Controllers\AdminExamController::class, 'addQuestion'])->name('exams.questions.store');
+    Route::delete('/exams/{exam}/questions/{question}', [\App\Http\Controllers\AdminExamController::class, 'removeQuestion'])->name('exams.questions.destroy');
+
+    // Evaluator assignment
+    Route::post('/exams/{exam}/assign', [\App\Http\Controllers\AdminExamController::class, 'assignEvaluator'])->name('exams.assign');
 });
 
-// Evaluator Routes
-Route::middleware(['auth', 'verified', 'role:evaluator'])->prefix('evaluator')->name('evaluator.')->group(function () {
+/* ───────────────────────────── EVALUATOR ───────────────────────── */
+Route::middleware(['auth', 'verified', 'role:evaluator'])
+    ->prefix('evaluator')->name('evaluator.')
+    ->group(function () {
+
     Route::get('/dashboard', [\App\Http\Controllers\EvaluatorScriptController::class, 'dashboard'])->name('dashboard');
     Route::get('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'show'])->name('scripts.show');
     Route::post('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'storeMarks'])->name('scripts.storeMarks');
 });
 
-// Student Routes
-Route::middleware(['auth', 'verified', 'role:student'])->prefix('student')->name('student.')->group(function () {
+/* ───────────────────────────── STUDENT ─────────────────────────── */
+Route::middleware(['auth', 'verified', 'role:student'])
+    ->prefix('student')->name('student.')
+    ->group(function () {
+
     Route::get('/dashboard', [\App\Http\Controllers\StudentExamController::class, 'dashboard'])->name('dashboard');
+    Route::get('/exams/{exam}', [\App\Http\Controllers\StudentExamController::class, 'showExam'])->name('exams.show');
     Route::post('/scripts/{exam}/upload', [\App\Http\Controllers\StudentExamController::class, 'uploadScript'])->name('scripts.upload');
 });
+
+/* ───────────────────────────── PROFILE ─────────────────────────── */
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
