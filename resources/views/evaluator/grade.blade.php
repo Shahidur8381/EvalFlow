@@ -1,49 +1,92 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Grading Script: ') }} {{ $script->student->name }}
-            </h2>
-            <a href="{{ route('evaluator.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">&larr; Back to Dashboard</a>
-        </div>
+    <x-slot name="header">Grade Script</x-slot>
+    <x-slot name="subheader">{{ $script->student->name }} · {{ $script->exam->title }}</x-slot>
+    <x-slot name="headerActions">
+        <a href="{{ route('evaluator.dashboard') }}" class="btn btn-outline btn-sm">← Back</a>
     </x-slot>
 
-    <div class="py-12 h-screen max-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 h-full">
-            @if ($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;height:calc(100vh - 200px);min-height:500px">
+        <!-- PDF Viewer -->
+        <div class="card" style="margin:0;display:flex;flex-direction:column">
+            <div class="card-header">
+                <h3>📄 {{ $script->student->name }}'s Answer Script</h3>
+                <a href="{{ asset('storage/' . $script->file_path) }}" target="_blank" class="btn btn-outline btn-xs">Open in New Tab ↗</a>
+            </div>
+            <iframe src="{{ asset('storage/' . $script->file_path) }}"
+                    style="flex:1;border:none;width:100%;background:#525659"
+                    title="Answer Script PDF"></iframe>
+        </div>
+
+        <!-- Grading Panel -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+            <!-- Questions Reference -->
+            <div class="card" style="margin:0;overflow-y:auto;max-height:300px">
+                <div class="card-header"><h3>📋 Question Marks</h3></div>
+                <div style="padding:8px 0">
+                    @foreach($script->exam->questions as $i => $question)
+                    <div style="padding:10px 20px;border-bottom:1px solid var(--border);font-size:.85rem">
+                        <div class="flex justify-between items-center">
+                            <span style="color:var(--text-secondary)">Q{{ $i+1 }}</span>
+                            <span class="badge badge-blue">{{ $question->marks }} pts</span>
+                        </div>
+                        <div style="color:var(--text-primary);margin-top:4px;line-height:1.4">{{ Str::limit($question->body, 80) }}</div>
+                    </div>
+                    @endforeach
+                    <div style="padding:12px 20px;background:var(--surface-alt);font-weight:700;font-size:.875rem">
+                        Total: {{ $script->exam->total_marks }} marks
+                    </div>
                 </div>
-            @endif
+            </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg h-[80vh] flex flex-col md:flex-row">
-                <!-- PDF Viewer Area (Left Side) -->
-                <div class="w-full md:w-3/4 h-full border-r p-4 bg-gray-100">
-                    <iframe src="{{ asset('storage/' . $script->file_path) }}" class="w-full h-full border-0 rounded" title="Student Answer Script"></iframe>
+            <!-- Grading Form -->
+            <div class="card" style="margin:0">
+                <div class="card-header">
+                    <h3>🏆 Assign Mark</h3>
+                    @if($script->status === 'evaluated')
+                        <span class="badge badge-green">Evaluated</span>
+                    @else
+                        <span class="badge badge-yellow">Pending</span>
+                    @endif
                 </div>
+                <div class="card-body">
+                    @if($errors->any())
+                    <div class="alert alert-error">
+                        @foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach
+                    </div>
+                    @endif
 
-                <!-- Grading Area (Right Side) -->
-                <div class="w-full md:w-1/4 h-full p-6 bg-white overflow-y-auto">
-                    <h3 class="text-lg font-bold mb-2">{{ $script->exam->title }}</h3>
-                    <p class="text-sm text-gray-600 mb-6">Course: {{ $script->exam->course->name ?? 'N/A' }}</p>
-
-                    <form action="{{ route('evaluator.scripts.storeMarks', $script) }}" method="POST" class="space-y-4">
+                    <form action="{{ route('evaluator.scripts.storeMarks', $script) }}" method="POST">
                         @csrf
-                        <div>
-                            <x-input-label for="marks_obtained" :value="__('Assign Marks (out of ' . $script->exam->total_marks . ')')" />
-                            <x-text-input id="marks_obtained" name="marks_obtained" type="number" step="0.5" min="0" max="{{ $script->exam->total_marks }}" class="mt-1 block w-full text-lg text-center" required value="{{ old('marks_obtained', $script->marks_obtained) }}" />
+                        <div class="form-group">
+                            <label class="form-label">Marks Obtained</label>
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <input type="number" name="marks_obtained" step="0.5" min="0"
+                                       max="{{ $script->exam->total_marks }}"
+                                       class="form-control"
+                                       style="font-size:1.5rem;font-weight:700;text-align:center"
+                                       value="{{ old('marks_obtained', $script->marks_obtained) }}"
+                                       required>
+                                <div style="color:var(--text-secondary);font-size:1.3rem;white-space:nowrap">/ {{ $script->exam->total_marks }}</div>
+                            </div>
                         </div>
 
-                        <div class="pt-4">
-                            <x-primary-button class="w-full justify-center text-lg py-3">
-                                {{ __('Save & Complete Evaluation') }}
-                            </x-primary-button>
-                        </div>
+                        <button type="submit" class="btn btn-success w-full" style="font-size:1rem;padding:12px">
+                            ✅ Save Evaluation
+                        </button>
                     </form>
+                </div>
+            </div>
+
+            <!-- Student Info -->
+            <div class="card" style="margin:0">
+                <div class="card-body" style="padding:16px">
+                    <table style="width:100%;font-size:.82rem;border-collapse:collapse">
+                        <tr><td class="text-muted" style="padding:4px 0;width:80px">Student</td><td class="font-bold">{{ $script->student->name }}</td></tr>
+                        <tr><td class="text-muted" style="padding:4px 0">Email</td><td>{{ $script->student->email }}</td></tr>
+                        <tr><td class="text-muted" style="padding:4px 0">Exam</td><td>{{ $script->exam->title }}</td></tr>
+                        <tr><td class="text-muted" style="padding:4px 0">Submitted</td><td>{{ $script->created_at->format('M d, g:i A') }}</td></tr>
+                    </table>
                 </div>
             </div>
         </div>

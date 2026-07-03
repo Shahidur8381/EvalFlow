@@ -1,46 +1,106 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Evaluator Dashboard') }}
-        </h2>
-    </x-slot>
+    <x-slot name="header">Evaluator Dashboard</x-slot>
+    <x-slot name="subheader">Scripts assigned to you for grading.</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                    {{ session('success') }}
-                </div>
-            @endif
+    <!-- Stats -->
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div class="stat-value">{{ $scripts->count() }}</div>
+            <div class="stat-label">Total Scripts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value">{{ $pending }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value">{{ $evaluated }}</div>
+            <div class="stat-label">Evaluated</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value">{{ $scripts->count() > 0 ? round(($evaluated/$scripts->count())*100) : 0 }}%</div>
+            <div class="stat-label">Progress</div>
+        </div>
+    </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-lg font-bold mb-4">Submitted Scripts</h3>
-                @if($scripts->isEmpty())
-                    <p class="text-gray-500">No scripts submitted yet.</p>
+    @if($scripts->isEmpty())
+    <div class="card">
+        <div class="card-body" style="text-align:center;padding:60px;color:var(--text-secondary)">
+            <div style="font-size:3rem;margin-bottom:16px">📭</div>
+            <div class="font-bold" style="font-size:1.1rem">No scripts assigned to you</div>
+            <div class="mt-1 text-sm">The administrator will assign exam papers to you. Check back later.</div>
+        </div>
+    </div>
+    @else
+
+    @php
+        $byExam = $scripts->groupBy('exam_id');
+    @endphp
+
+    @foreach($byExam as $examId => $examScripts)
+    @php $exam = $examScripts->first()->exam; @endphp
+    <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+            <div>
+                <h3>{{ $exam->title }}</h3>
+                <div class="text-sm text-muted mt-1">{{ $exam->course->name ?? '' }} · {{ $exam->total_marks }} marks total</div>
+            </div>
+            <div class="flex gap-2 items-center">
+                <span class="badge badge-green">{{ $examScripts->where('status','evaluated')->count() }}/{{ $examScripts->count() }} graded</span>
+                @if(now() > $exam->end_time)
+                    <span class="badge badge-gray">Closed</span>
                 @else
-                    <div class="space-y-4">
-                        @foreach($scripts as $script)
-                            <div class="border p-4 rounded-lg shadow-sm flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <div>
-                                    <h4 class="font-bold text-md">{{ $script->exam->title }} <span class="text-sm font-normal text-gray-500">({{ $script->exam->course->code ?? 'No Course' }})</span></h4>
-                                    <p class="text-sm text-gray-600">Student: {{ $script->student->name }} | Submitted: {{ $script->created_at->format('M d, g:i A') }}</p>
-                                    <p class="text-sm mt-1">
-                                        Status: 
-                                        @if($script->status === 'evaluated')
-                                            <span class="text-green-600 font-semibold">Evaluated ({{ $script->marks_obtained }} / {{ $script->exam->total_marks }})</span>
-                                        @else
-                                            <span class="text-yellow-600 font-semibold">Pending Evaluation</span>
-                                        @endif
-                                    </p>
-                                </div>
-                                <a href="{{ route('evaluator.scripts.show', $script) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                    {{ $script->status === 'evaluated' ? 'View/Edit Grade' : 'Grade Script' }}
-                                </a>
-                            </div>
-                        @endforeach
-                    </div>
+                    <span class="badge badge-green">Active</span>
                 @endif
             </div>
         </div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Mark</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($examScripts as $script)
+                    <tr>
+                        <td>
+                            <div class="font-bold">{{ $script->student->name }}</div>
+                            <div class="text-sm text-muted">{{ $script->student->email }}</div>
+                        </td>
+                        <td class="text-sm text-muted">{{ $script->created_at->format('M d, g:i A') }}</td>
+                        <td>
+                            @if($script->status === 'evaluated')
+                                <span class="badge badge-green">Evaluated</span>
+                            @else
+                                <span class="badge badge-yellow">Pending</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($script->marks_obtained !== null)
+                                <strong>{{ $script->marks_obtained }}/{{ $exam->total_marks }}</strong>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            <a href="{{ route('evaluator.scripts.show', $script) }}" class="btn btn-primary btn-xs">
+                                {{ $script->status === 'evaluated' ? 'Edit Grade' : 'Grade' }}
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
+    @endforeach
+    @endif
 </x-app-layout>
