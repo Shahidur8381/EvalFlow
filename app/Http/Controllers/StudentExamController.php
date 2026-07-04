@@ -28,6 +28,7 @@ class StudentExamController extends Controller
         $exam->load(['course', 'questions']);
         $myScript = Script::where('student_id', auth()->id())
                           ->where('exam_id', $exam->id)
+                          ->with('scriptMarks')
                           ->first();
 
         return view('student.exam', compact('exam', 'myScript'));

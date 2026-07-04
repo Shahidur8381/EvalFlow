@@ -68,12 +68,38 @@
                     </div>
 
                     @if($myScript->status === 'evaluated')
-                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px;text-align:center">
-                        <div style="font-size:2rem;font-weight:800;color:#15803d">
-                            {{ $myScript->marks_obtained }}<span style="font-size:1rem;color:#86efac">/{{ $exam->total_marks }}</span>
+                    <!-- Total Score -->
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
+                        <div style="font-size:2.5rem;font-weight:900;color:#15803d;line-height:1">
+                            {{ $myScript->marks_obtained }}<span style="font-size:1.1rem;color:#86efac;font-weight:600">/{{ $exam->total_marks }}</span>
                         </div>
-                        <div class="text-sm" style="color:#166534;margin-top:4px">Your Final Score</div>
+                        <div class="text-sm" style="color:#166534;margin-top:6px;font-weight:600">🎉 Your Final Score</div>
                     </div>
+
+                    <!-- Per-question breakdown -->
+                    @if($myScript->scriptMarks->isNotEmpty())
+                    <div style="border:1px solid #bbf7d0;border-radius:10px;overflow:hidden">
+                        <div style="background:#f0fdf4;padding:10px 14px;font-size:.78rem;font-weight:700;color:#15803d;border-bottom:1px solid #bbf7d0">
+                            📊 Mark Breakdown by Question
+                        </div>
+                        @foreach($exam->questions as $i => $question)
+                        @php
+                            $mark = $myScript->scriptMarks->where('question_id', $question->id)->first();
+                        @endphp
+                        <div style="padding:10px 14px;border-bottom:1px solid #dcfce7;display:flex;justify-content:space-between;align-items:center;font-size:.83rem;{{ $loop->last ? 'border-bottom:none' : '' }}">
+                            <div style="display:flex;gap:8px;align-items:flex-start;flex:1">
+                                <span style="background:#4f46e5;color:#fff;border-radius:5px;padding:2px 7px;font-size:.7rem;font-weight:700;flex-shrink:0">Q{{ $i+1 }}</span>
+                                <span style="color:#374151;line-height:1.4">{{ Str::limit($question->body, 70) }}</span>
+                            </div>
+                            <div style="font-weight:700;color:#166534;white-space:nowrap;margin-left:12px">
+                                {{ $mark ? $mark->marks_obtained : '—' }}
+                                <span style="color:#86efac;font-weight:400">/{{ $question->marks }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+
                     @else
                     <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center;color:#92400e">
                         ⏳ Your script is awaiting evaluation.
