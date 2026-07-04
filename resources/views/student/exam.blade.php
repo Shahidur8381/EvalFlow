@@ -34,7 +34,13 @@
                 <span class="badge badge-blue">{{ $exam->total_marks }} marks</span>
             </div>
             <div class="card-body">
-                @if($exam->questions->isEmpty())
+                @if($isUpcoming)
+                    <div class="text-muted" style="text-align:center;padding:40px">
+                        <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+                        <div class="font-bold">Paper Locked</div>
+                        <div class="text-sm mt-1">The question paper will be revealed when the exam starts.</div>
+                    </div>
+                @elseif($exam->questions->isEmpty())
                     <div class="text-muted">No questions have been added to this exam yet.</div>
                 @else
                 <div style="display:flex;flex-direction:column;gap:16px">

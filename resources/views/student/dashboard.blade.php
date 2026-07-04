@@ -81,7 +81,7 @@
             </div>
             <div class="flex gap-2">
                 <span class="badge badge-yellow">Upcoming</span>
-                <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-outline btn-xs">Preview Paper</a>
+                <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-outline btn-xs">View Details</a>
             </div>
         </div>
         @endforeach
