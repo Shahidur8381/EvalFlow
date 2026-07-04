@@ -77,17 +77,15 @@
                         <input type="text" name="title" class="form-control" placeholder="e.g. Mid-term Exam 2026" value="{{ old('title') }}" required>
                         @error('title')<div class="form-error">{{ $message }}</div>@enderror
                     </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Start Time</label>
-                            <input type="datetime-local" name="start_time" class="form-control" value="{{ old('start_time') }}" required>
-                            @error('start_time')<div class="form-error">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">End Time</label>
-                            <input type="datetime-local" name="end_time" class="form-control" value="{{ old('end_time') }}" required>
-                            @error('end_time')<div class="form-error">{{ $message }}</div>@enderror
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input type="datetime-local" name="start_time" class="form-control" value="{{ old('start_time') }}" required>
+                        @error('start_time')<div class="form-error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input type="datetime-local" name="end_time" class="form-control" value="{{ old('end_time') }}" required>
+                        @error('end_time')<div class="form-error">{{ $message }}</div>@enderror
                     </div>
                     <button type="submit" class="btn btn-primary w-full">Create Exam</button>
                 </form>
