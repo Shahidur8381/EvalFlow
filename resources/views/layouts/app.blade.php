@@ -226,8 +226,11 @@
         <nav class="sidebar-nav">
             @if($role === 'admin')
                 <div class="sidebar-section-title">Admin</div>
-                <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard', 'admin.exams.*') ? 'active' : '' }}">
                     <span class="icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <span class="icon">👥</span> Users
                 </a>
             @elseif($role === 'evaluator')
                 <div class="sidebar-section-title">Evaluator</div>

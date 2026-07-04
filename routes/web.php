@@ -21,6 +21,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
     Route::get('/dashboard', [\App\Http\Controllers\AdminExamController::class, 'dashboard'])->name('dashboard');
 
+    // Users
+    Route::get('/users', [\App\Http\Controllers\AdminUserController::class, 'index'])->name('users.index');
+    Route::post('/users/evaluators', [\App\Http\Controllers\AdminUserController::class, 'storeEvaluator'])->name('users.storeEvaluator');
+    Route::delete('/users/{user}', [\App\Http\Controllers\AdminUserController::class, 'destroy'])->name('users.destroy');
+
     // Courses
     Route::post('/courses', [\App\Http\Controllers\AdminExamController::class, 'storeCourse'])->name('courses.store');
 
