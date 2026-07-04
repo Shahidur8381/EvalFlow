@@ -55,8 +55,12 @@ Route::middleware(['auth', 'verified', 'role:student'])
     ->group(function () {
 
     Route::get('/dashboard', [\App\Http\Controllers\StudentExamController::class, 'dashboard'])->name('dashboard');
-    Route::get('/exams/{exam}', [\App\Http\Controllers\StudentExamController::class, 'showExam'])->name('exams.show');
-    Route::post('/scripts/{exam}/upload', [\App\Http\Controllers\StudentExamController::class, 'uploadScript'])->name('scripts.upload');
+    Route::get('/exams/{exam}', [\App\Http\Controllers\StudentExamController::class, 'showExam'])
+        ->middleware('exam.questions')
+        ->name('exams.show');
+    Route::post('/scripts/{exam}/upload', [\App\Http\Controllers\StudentExamController::class, 'uploadScript'])
+        ->middleware('exam.questions')
+        ->name('scripts.upload');
 });
 
 /* ───────────────────────────── PROFILE ─────────────────────────── */

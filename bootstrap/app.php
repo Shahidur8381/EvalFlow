@@ -13,8 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role'      => \App\Http\Middleware\RoleMiddleware::class,
-            'exam.time' => \App\Http\Middleware\EnsureExamTimeIsValid::class,
+            'role'           => \App\Http\Middleware\RoleMiddleware::class,
+            'exam.time'      => \App\Http\Middleware\EnsureExamTimeIsValid::class,
+            'exam.questions' => \App\Http\Middleware\EnsureExamHasQuestions::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
