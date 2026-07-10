@@ -59,10 +59,27 @@ class EvaluatorScriptController extends Controller
 
         // Update cached total on the script
         $total = ScriptMark::where('script_id', $script->id)->sum('marks_obtained');
+        
+        $wasPending = $script->status !== 'evaluated';
+
         $script->update([
             'marks_obtained' => $total,
             'status'         => 'evaluated',
         ]);
+
+        if ($wasPending) {
+            $earning = $script->exam->total_marks * 0.75;
+            $user = auth()->user();
+            $user->increment('balance', $earning);
+
+            \App\Models\Transaction::create([
+                'user_id' => $user->id,
+                'type' => 'earning',
+                'amount' => $earning,
+                'status' => 'completed',
+                'description' => 'Evaluated script for exam: ' . $script->exam->title,
+            ]);
+        }
 
         return redirect()->route('evaluator.dashboard')
                          ->with('success', 'All marks saved for ' . $script->student->name . '! Total: ' . $total . '/' . $script->exam->total_marks);

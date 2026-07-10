@@ -42,6 +42,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
     // Evaluator assignment
     Route::post('/exams/{exam}/assign', [\App\Http\Controllers\AdminExamController::class, 'assignEvaluator'])->name('exams.assign');
+
+    // Finance
+    Route::get('/finance', [\App\Http\Controllers\AdminFinanceController::class, 'index'])->name('finance.index');
+    Route::post('/finance/withdrawals/{withdrawal}/approve', [\App\Http\Controllers\AdminFinanceController::class, 'approveWithdrawal'])->name('finance.withdrawals.approve');
 });
 
 /* ───────────────────────────── EVALUATOR ───────────────────────── */
@@ -52,6 +56,12 @@ Route::middleware(['auth', 'verified', 'role:evaluator'])
     Route::get('/dashboard', [\App\Http\Controllers\EvaluatorScriptController::class, 'dashboard'])->name('dashboard');
     Route::get('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'show'])->name('scripts.show');
     Route::post('/scripts/{script}/grade', [\App\Http\Controllers\EvaluatorScriptController::class, 'storeMarks'])->name('scripts.storeMarks');
+
+    // Finance
+    Route::get('/finance', [\App\Http\Controllers\EvaluatorFinanceController::class, 'index'])->name('finance.index');
+    Route::post('/finance/withdraw', [\App\Http\Controllers\EvaluatorFinanceController::class, 'withdraw'])
+        ->middleware('withdraw.min')
+        ->name('finance.withdraw');
 });
 
 /* ───────────────────────────── STUDENT ─────────────────────────── */
@@ -66,6 +76,14 @@ Route::middleware(['auth', 'verified', 'role:student'])
     Route::post('/scripts/{exam}/upload', [\App\Http\Controllers\StudentExamController::class, 'uploadScript'])
         ->middleware('exam.questions')
         ->name('scripts.upload');
+
+    // Finance
+    Route::get('/finance', [\App\Http\Controllers\StudentFinanceController::class, 'index'])->name('finance.index');
+    Route::post('/finance/deposit', [\App\Http\Controllers\StudentFinanceController::class, 'initiatePayment'])->name('finance.deposit');
+    // Callbacks for SSLCommerz (must be excluded from CSRF usually, but since mock, we can handle it)
+    Route::post('/finance/success', [\App\Http\Controllers\StudentFinanceController::class, 'success'])->name('finance.success');
+    Route::post('/finance/fail', [\App\Http\Controllers\StudentFinanceController::class, 'fail'])->name('finance.fail');
+    Route::post('/finance/cancel', [\App\Http\Controllers\StudentFinanceController::class, 'cancel'])->name('finance.cancel');
 });
 
 /* ───────────────────────────── PROFILE ─────────────────────────── */

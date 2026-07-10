@@ -32,6 +32,21 @@ class User extends Authenticatable
         return $this->role === 'student';
     }
 
+    public function scripts()
+    {
+        return $this->hasMany(Script::class, 'student_id');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

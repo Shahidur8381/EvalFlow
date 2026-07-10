@@ -49,11 +49,27 @@ class StudentExamController extends Controller
             return back()->with('error', 'You have already submitted an answer script for this exam.');
         }
 
+        $user = auth()->user();
+
+        if ($user->balance < $exam->total_marks) {
+            return back()->with('error', 'Insufficient credits. You need ' . $exam->total_marks . ' credits to submit this exam. Please top up your wallet.');
+        }
+
         $path = $request->file('answer_script')->store('scripts', 'public');
+
+        // Deduct balance and log transaction
+        $user->decrement('balance', $exam->total_marks);
+        \App\Models\Transaction::create([
+            'user_id'     => $user->id,
+            'type'        => 'exam_fee',
+            'amount'      => $exam->total_marks,
+            'status'      => 'completed',
+            'description' => 'Exam fee deduction for: ' . $exam->title,
+        ]);
 
         Script::create([
             'exam_id'    => $exam->id,
-            'student_id' => auth()->id(),
+            'student_id' => $user->id,
             'file_path'  => $path,
             'status'     => 'pending',
         ]);

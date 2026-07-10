@@ -232,15 +232,24 @@
                 <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                     <span class="icon">👥</span> Users
                 </a>
+                <a href="{{ route('admin.finance.index') }}" class="sidebar-link {{ request()->routeIs('admin.finance.*') ? 'active' : '' }}">
+                    <span class="icon">💰</span> Finance
+                </a>
             @elseif($role === 'evaluator')
                 <div class="sidebar-section-title">Evaluator</div>
                 <a href="{{ route('evaluator.dashboard') }}" class="sidebar-link {{ request()->routeIs('evaluator.dashboard') ? 'active' : '' }}">
                     <span class="icon">✅</span> My Scripts
                 </a>
+                <a href="{{ route('evaluator.finance.index') }}" class="sidebar-link {{ request()->routeIs('evaluator.finance.*') ? 'active' : '' }}">
+                    <span class="icon">💰</span> Earnings
+                </a>
             @elseif($role === 'student')
                 <div class="sidebar-section-title">Student</div>
                 <a href="{{ route('student.dashboard') }}" class="sidebar-link {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
                     <span class="icon">📚</span> My Exams
+                </a>
+                <a href="{{ route('student.finance.index') }}" class="sidebar-link {{ request()->routeIs('student.finance.*') ? 'active' : '' }}">
+                    <span class="icon">💳</span> My Wallet
                 </a>
             @endif
 
