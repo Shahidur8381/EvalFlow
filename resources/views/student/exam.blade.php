@@ -72,12 +72,19 @@
             <div class="card" style="border-top:4px solid #10b981">
                 <div class="card-header"><h3>✅ Submission Status</h3></div>
                 <div class="card-body">
-                    <div class="flex gap-3 items-center" style="margin-bottom:16px">
-                        <div style="font-size:2.5rem">📄</div>
-                        <div>
-                            <div class="font-bold">Script Uploaded</div>
-                            <div class="text-sm text-muted">{{ $myScript->created_at->format('M d, Y g:i A') }}</div>
+                    <div class="flex gap-3 items-center" style="margin-bottom:16px; justify-content: space-between;">
+                        <div class="flex gap-3 items-center">
+                            <div style="font-size:2.5rem">📄</div>
+                            <div>
+                                <div class="font-bold">Script Uploaded</div>
+                                <div class="text-sm text-muted">{{ $myScript->created_at->format('M d, Y g:i A') }}</div>
+                            </div>
                         </div>
+                        <a href="{{ asset('storage/' . $myScript->file_path) }}" target="_blank" class="btn btn-outline btn-sm">↗ Open Full</a>
+                    </div>
+
+                    <div style="border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:20px; height: 350px;">
+                        <iframe src="{{ asset('storage/' . $myScript->file_path) }}#toolbar=0&navpanes=0&view=FitH" width="100%" height="100%" style="border:none;"></iframe>
                     </div>
 
                     @if($myScript->status === 'evaluated')
@@ -129,9 +136,11 @@
                         @csrf
                         <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:16px;margin-bottom:20px;font-size:.85rem;color:#5b21b6">
                             <strong>Instructions:</strong><br>
-                            • PDF files only (max 20MB)<br>
-                            • You can only submit <strong>once</strong> per exam<br>
-                            • Make sure your script is complete before uploading
+                            • Write your answers on paper.<br>
+                            • Click photos with a PDF generator app (e.g. CamScanner) and upload the PDF.<br>
+                            • PDF files only (max 20MB).<br>
+                            • You can only submit <strong>once</strong> per exam.<br>
+                            • Make sure your script is complete before uploading.
                         </div>
                         <div class="form-group">
                             <label class="form-label">Select PDF File</label>
