@@ -3,14 +3,14 @@
     <x-slot name="subheader">Manage student and evaluator accounts.</x-slot>
 
     @php
-        $evaluators = $users->where('role', 'evaluator');
-        $students   = $users->where('role', 'student');
+        $evaluators = $allUsers->where('role', 'evaluator');
+        $students   = $allUsers->where('role', 'student');
     @endphp
 
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">👥</div>
-            <div class="stat-value">{{ $users->count() }}</div>
+            <div class="stat-value">{{ $allUsers->count() }}</div>
             <div class="stat-label">Total Users</div>
         </div>
         <div class="stat-card">
@@ -58,7 +58,23 @@
 
         <!-- User List -->
         <div class="card">
-            <div class="card-header"><h3>📋 All Users</h3></div>
+            <div class="card-header" style="display:block">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3>📋 All Users ({{ $users->count() }})</h3>
+                    @if(request()->hasAny(['role', 'search']))
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-outline btn-xs">Clear Filters</a>
+                    @endif
+                </div>
+                <form method="GET" action="{{ route('admin.users.index') }}" style="display:flex; gap:10px;">
+                    <select name="role" class="form-control" style="width:140px; padding:6px 10px; font-size:.85rem;">
+                        <option value="">All Roles</option>
+                        <option value="evaluator" {{ request('role') === 'evaluator' ? 'selected' : '' }}>Evaluators</option>
+                        <option value="student" {{ request('role') === 'student' ? 'selected' : '' }}>Students</option>
+                    </select>
+                    <input type="text" name="search" class="form-control" placeholder="Search name or email..." value="{{ request('search') }}" style="flex:1; padding:6px 10px; font-size:.85rem;">
+                    <button type="submit" class="btn btn-primary" style="padding:6px 12px; font-size:.85rem;">Filter</button>
+                </form>
+            </div>
             <div class="table-wrap" style="max-height: 500px; overflow-y: auto;">
                 <table class="data-table">
                     <thead>
