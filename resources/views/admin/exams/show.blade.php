@@ -30,17 +30,24 @@
             <div class="card">
                 <div class="card-header"><h3>➕ Add Question</h3></div>
                 <div class="card-body">
-                    <form action="{{ route('admin.exams.questions.store', $exam) }}" method="POST">
+                    <form action="{{ route('admin.exams.questions.store', $exam) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
                             <label class="form-label">Question Body</label>
                             <textarea name="body" class="form-control" rows="3" placeholder="Enter the question text..." required style="resize:vertical">{{ old('body') }}</textarea>
                             @error('body')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Marks</label>
-                            <input type="number" name="marks" class="form-control" placeholder="e.g. 10" min="1" max="999" value="{{ old('marks', 10) }}" required>
-                            @error('marks')<div class="form-error">{{ $message }}</div>@enderror
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Marks</label>
+                                <input type="number" name="marks" class="form-control" placeholder="e.g. 10" min="1" max="999" value="{{ old('marks', 10) }}" required>
+                                @error('marks')<div class="form-error">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Media (Optional PDF)</label>
+                                <input type="file" name="media" class="form-control" accept=".pdf" style="padding:6px; font-size:.85rem;">
+                                @error('media')<div class="form-error">{{ $message }}</div>@enderror
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-success w-full">Add Question</button>
                     </form>
@@ -70,7 +77,16 @@
                             @foreach($exam->questions as $i => $question)
                             <tr>
                                 <td style="color:#94a3b8;width:40px">Q{{ $i+1 }}</td>
-                                <td>{{ $question->body }}</td>
+                                <td>
+                                    <div>{{ $question->body }}</div>
+                                    @if($question->media_path)
+                                        <div style="margin-top:6px;">
+                                            <a href="{{ asset('storage/' . $question->media_path) }}" target="_blank" class="btn btn-outline btn-xs" style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; font-size:.7rem;">
+                                                📄 View Media
+                                            </a>
+                                        </div>
+                                    @endif
+                                </td>
                                 <td><span class="badge badge-blue">{{ $question->marks }} pts</span></td>
                                 <td>
                                     <form action="{{ route('admin.exams.questions.destroy', [$exam, $question]) }}" method="POST" onsubmit="return confirm('Remove this question?')">

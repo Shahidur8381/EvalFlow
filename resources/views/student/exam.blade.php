@@ -51,6 +51,13 @@
                             <span class="badge badge-purple">{{ $question->marks }} marks</span>
                         </div>
                         <div style="color:var(--text-primary);line-height:1.6">{{ $question->body }}</div>
+                        @if($question->media_path)
+                            <div style="margin-top:12px;">
+                                <a href="{{ asset('storage/' . $question->media_path) }}" target="_blank" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+                                    📄 Open Attached PDF
+                                </a>
+                            </div>
+                        @endif
                     </div>
                     @endforeach
                 </div>

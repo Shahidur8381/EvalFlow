@@ -271,7 +271,16 @@
                     <div class="question-mark-row">
                         <div class="q-header">
                             <span class="q-number">{{ $i + 1 }}</span>
-                            <div class="q-body">{{ $question->body }}</div>
+                            <div class="q-body">
+                                <div>{{ $question->body }}</div>
+                                @if($question->media_path)
+                                    <div style="margin-top:8px;">
+                                        <a href="{{ asset('storage/' . $question->media_path) }}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:rgba(79,70,229,.15); color:#818cf8; border:1px solid rgba(79,70,229,.3); border-radius:6px; font-size:.75rem; font-weight:600; text-decoration:none;">
+                                            📄 View Question PDF
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
                             <span class="q-max-badge">/ {{ $question->marks }}</span>
                         </div>
                         <div class="q-input-row">

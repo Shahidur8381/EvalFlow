@@ -69,13 +69,20 @@ class AdminExamController extends Controller
         $request->validate([
             'body'  => 'required|string',
             'marks' => 'required|integer|min:1|max:999',
+            'media' => 'nullable|file|mimes:pdf|max:20480',
         ]);
+
+        $mediaPath = null;
+        if ($request->hasFile('media')) {
+            $mediaPath = $request->file('media')->store('questions_media', 'public');
+        }
 
         $order = $exam->questions()->max('order') + 1;
         $exam->questions()->create([
-            'body'  => $request->body,
-            'marks' => $request->marks,
-            'order' => $order,
+            'body'       => $request->body,
+            'marks'      => $request->marks,
+            'media_path' => $mediaPath,
+            'order'      => $order,
         ]);
 
         return redirect()->route('admin.exams.show', $exam)
