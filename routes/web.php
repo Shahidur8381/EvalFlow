@@ -80,11 +80,12 @@ Route::middleware(['auth', 'verified', 'role:student'])
     // Finance
     Route::get('/finance', [\App\Http\Controllers\StudentFinanceController::class, 'index'])->name('finance.index');
     Route::post('/finance/deposit', [\App\Http\Controllers\StudentFinanceController::class, 'initiatePayment'])->name('finance.deposit');
-    // Callbacks for SSLCommerz (must be excluded from CSRF usually, but since mock, we can handle it)
-    Route::post('/finance/success', [\App\Http\Controllers\StudentFinanceController::class, 'success'])->name('finance.success');
-    Route::post('/finance/fail', [\App\Http\Controllers\StudentFinanceController::class, 'fail'])->name('finance.fail');
-    Route::post('/finance/cancel', [\App\Http\Controllers\StudentFinanceController::class, 'cancel'])->name('finance.cancel');
 });
+
+// Callbacks for SSLCommerz (must be outside auth group due to SameSite=Lax dropping cookies on cross-origin POST)
+Route::post('/student/finance/success', [\App\Http\Controllers\StudentFinanceController::class, 'success'])->name('student.finance.success');
+Route::post('/student/finance/fail', [\App\Http\Controllers\StudentFinanceController::class, 'fail'])->name('student.finance.fail');
+Route::post('/student/finance/cancel', [\App\Http\Controllers\StudentFinanceController::class, 'cancel'])->name('student.finance.cancel');
 
 /* ───────────────────────────── PROFILE ─────────────────────────── */
 Route::middleware('auth')->group(function () {
