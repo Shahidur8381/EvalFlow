@@ -35,8 +35,8 @@ class StudentFinanceController extends Controller
         ]);
 
         $postData = [
-            'store_id'     => env('SSLCOMMERZ_STORE_ID', 'testbox'),
-            'store_passwd' => env('SSLCOMMERZ_STORE_PASSWORD', 'testpassword'),
+            'store_id'     => config('services.sslcommerz.store_id'),
+            'store_passwd' => config('services.sslcommerz.store_password'),
             'total_amount' => $request->amount,
             'currency'     => 'BDT',
             'tran_id'      => $trxId,
@@ -57,72 +57,100 @@ class StudentFinanceController extends Controller
         ];
 
         try {
-            $response = Http::withoutVerifying()->asForm()->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $postData);
+            $response = Http::withoutVerifying()
+                ->asForm()
+                ->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $postData);
         } catch (\Exception $e) {
-            return redirect()->route('student.finance.index')->withErrors(['error' => 'Could not connect to SSLCommerz Sandbox: ' . $e->getMessage()]);
+            $transaction->update(['status' => 'failed']);
+            return redirect()->route('student.finance.index')
+                ->withErrors(['error' => 'Could not connect to SSLCommerz: ' . $e->getMessage()]);
         }
 
-        if ($response && $response->successful() && isset($response['GatewayPageURL'])) {
-            return redirect($response['GatewayPageURL']);
+        $body = $response->json();
+
+        // Check that we got a non-empty GatewayPageURL
+        if ($response->successful() && !empty($body['GatewayPageURL'])) {
+            return redirect($body['GatewayPageURL']);
         }
 
-        $errorDetails = $response ? $response->body() : 'No response';
-        return redirect()->route('student.finance.index')->withErrors(['error' => 'SSLCommerz Gateway Error: ' . $errorDetails]);
+        // API returned an error — mark transaction failed and show reason
+        $transaction->update(['status' => 'failed']);
+        $reason = $body['failedreason'] ?? ($body['status'] ?? 'Unknown error from SSLCommerz');
+        return redirect()->route('student.finance.index')
+            ->withErrors(['error' => 'SSLCommerz Error: ' . $reason]);
     }
 
     public function success(Request $request)
     {
-        $trxId = $request->input('tran_id');
-        $valId = $request->input('val_id');
+        $trxId  = $request->input('tran_id');
+        $valId  = $request->input('val_id');
         $status = $request->input('status');
 
-        $transaction = Transaction::where('trx_id', $trxId)->firstOrFail();
+        $transaction = Transaction::where('trx_id', $trxId)->first();
 
-        if ($transaction->status === 'pending') {
-            if ($status === 'VALID' || $status === 'VALIDATED') {
-                // Call Validation API to ensure the callback wasn't spoofed
-                try {
-                    $validationUrl = 'https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php';
-                    $response = Http::withoutVerifying()->get($validationUrl, [
-                        'val_id' => $valId,
-                        'store_id' => env('SSLCOMMERZ_STORE_ID', 'testbox'),
-                        'store_passwd' => env('SSLCOMMERZ_STORE_PASSWORD', 'testpassword'),
-                        'v' => 1,
-                        'format' => 'json'
-                    ]);
-
-                    if ($response && $response->successful()) {
-                        $result = $response->json();
-                        if (isset($result['status']) && ($result['status'] === 'VALID' || $result['status'] === 'VALIDATED')) {
-                            $transaction->update(['status' => 'completed']);
-                            $transaction->user->increment('balance', $transaction->amount);
-                            return redirect()->route('student.finance.index')->with('success', 'Payment successful! Balance added.');
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Fallthrough to failure
-                }
-            }
-
-            // If validation failed or status was not valid
-            $transaction->update(['status' => 'failed']);
-            return redirect()->route('student.finance.index')->withErrors(['error' => 'Payment validation failed.']);
+        if (!$transaction) {
+            return redirect('/')->withErrors(['error' => 'Transaction not found.']);
         }
 
-        return redirect()->route('student.finance.index')->with('success', 'Payment was already processed.');
+        if ($transaction->status !== 'pending') {
+            return redirect()->route('student.finance.index')
+                ->with('success', 'Payment was already processed.');
+        }
+
+        // Only proceed if SSLCommerz says it's VALID
+        if ($status !== 'VALID' && $status !== 'VALIDATED') {
+            $transaction->update(['status' => 'failed']);
+            return redirect()->route('student.finance.index')
+                ->withErrors(['error' => 'Payment was not validated by SSLCommerz (status: ' . $status . ')']);
+        }
+
+        // Server-side validation via SSLCommerz Validation API
+        try {
+            $validationResponse = Http::withoutVerifying()->get(
+                'https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php',
+                [
+                    'val_id'       => $valId,
+                    'store_id'     => config('services.sslcommerz.store_id'),
+                    'store_passwd' => config('services.sslcommerz.store_password'),
+                    'v'            => 1,
+                    'format'       => 'json',
+                ]
+            );
+
+            $result = $validationResponse->json();
+
+            if (isset($result['status']) && ($result['status'] === 'VALID' || $result['status'] === 'VALIDATED')) {
+                $transaction->update(['status' => 'completed']);
+                $transaction->user->increment('balance', $transaction->amount);
+                return redirect()->route('student.finance.index')
+                    ->with('success', 'Payment successful! ৳' . number_format($transaction->amount, 2) . ' added to your wallet.');
+            }
+        } catch (\Exception $e) {
+            // Validation API call failed
+        }
+
+        $transaction->update(['status' => 'failed']);
+        return redirect()->route('student.finance.index')
+            ->withErrors(['error' => 'Payment could not be verified. Please contact support.']);
     }
 
     public function fail(Request $request)
     {
         $trxId = $request->input('tran_id');
-        Transaction::where('trx_id', $trxId)->update(['status' => 'failed']);
-        return redirect()->route('student.finance.index')->withErrors(['error' => 'Payment failed.']);
+        if ($trxId) {
+            Transaction::where('trx_id', $trxId)->where('status', 'pending')->update(['status' => 'failed']);
+        }
+        return redirect()->route('student.finance.index')
+            ->withErrors(['error' => 'Payment failed. No amount was charged.']);
     }
 
     public function cancel(Request $request)
     {
         $trxId = $request->input('tran_id');
-        Transaction::where('trx_id', $trxId)->update(['status' => 'failed']);
-        return redirect()->route('student.finance.index')->withErrors(['error' => 'Payment cancelled.']);
+        if ($trxId) {
+            Transaction::where('trx_id', $trxId)->where('status', 'pending')->update(['status' => 'failed']);
+        }
+        return redirect()->route('student.finance.index')
+            ->withErrors(['error' => 'Payment was cancelled.']);
     }
 }

@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'sslcommerz' => [
+        'store_id'       => env('SSLCOMMERZ_STORE_ID', 'testbox'),
+        'store_password' => env('SSLCOMMERZ_STORE_PASSWORD', 'qwerty09876@SSL'),
+    ],
 
 ];

@@ -2,6 +2,13 @@
     <x-slot name="header">My Wallet</x-slot>
     <x-slot name="subheader">Manage your credits and view transaction history.</x-slot>
 
+    @if(session('success'))
+        <div class="alert alert-success">✅ {{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-error">❌ {{ $errors->first() }}</div>
+    @endif
+
     <div class="grid-2">
         <div class="card">
             <div class="card-body" style="text-align:center; padding: 40px;">
