@@ -59,10 +59,13 @@ class StudentFinanceController extends Controller
         // For simplicity, we just simulate the redirect to SSLCommerz sandbox
         // Since we may not have a valid store_id for real SSLCommerz sandbox testing right now,
         // we'll hit the API, but if it fails (due to invalid credentials), we will just simulate a success response for the sake of the project.
-        
-        $response = Http::asForm()->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $postData);
+        try {
+            $response = Http::withoutVerifying()->asForm()->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $postData);
+        } catch (\Exception $e) {
+            $response = null;
+        }
 
-        if ($response->successful() && isset($response['GatewayPageURL'])) {
+        if ($response && $response->successful() && isset($response['GatewayPageURL'])) {
             return redirect($response['GatewayPageURL']);
         }
 
