@@ -59,14 +59,15 @@ class StudentFinanceController extends Controller
         try {
             $response = Http::withoutVerifying()->asForm()->post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', $postData);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Could not connect to SSLCommerz Sandbox: ' . $e->getMessage()]);
+            return redirect()->route('student.finance.index')->withErrors(['error' => 'Could not connect to SSLCommerz Sandbox: ' . $e->getMessage()]);
         }
 
         if ($response && $response->successful() && isset($response['GatewayPageURL'])) {
             return redirect($response['GatewayPageURL']);
         }
 
-        return back()->withErrors(['error' => 'SSLCommerz Gateway Error: ' . ($response['failedreason'] ?? 'Invalid credentials or configuration.')]);
+        $errorDetails = $response ? $response->body() : 'No response';
+        return redirect()->route('student.finance.index')->withErrors(['error' => 'SSLCommerz Gateway Error: ' . $errorDetails]);
     }
 
     public function success(Request $request)
