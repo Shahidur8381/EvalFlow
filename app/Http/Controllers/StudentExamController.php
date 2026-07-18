@@ -31,6 +31,11 @@ class StudentExamController extends Controller
                           ->with('scriptMarks')
                           ->first();
 
+        // If not submitted yet, check if they have enough balance to participate
+        if (!$myScript && auth()->user()->balance < $exam->total_marks) {
+            return redirect()->route('student.dashboard')->with('error', 'Insufficient credits to view this exam. You need ' . $exam->total_marks . ' credits. Please top up your wallet.');
+        }
+
         return view('student.exam', compact('exam', 'myScript'));
     }
 

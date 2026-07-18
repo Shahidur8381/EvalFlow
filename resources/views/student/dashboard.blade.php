@@ -49,7 +49,14 @@
                     @if($myScript)
                         <span class="badge badge-green">✓ Submitted</span>
                     @else
-                        <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-primary btn-sm">View Paper & Upload</a>
+                        @if(auth()->user()->balance >= $exam->total_marks)
+                            <a href="{{ route('student.exams.show', $exam) }}" class="btn btn-primary btn-sm">View Paper & Upload</a>
+                        @else
+                            <div class="flex flex-col items-end gap-1">
+                                <button class="btn btn-primary btn-sm" disabled style="opacity:0.6; cursor:not-allowed;" title="Insufficient Balance">View Paper & Upload</button>
+                                <div class="text-xs text-red-500 font-bold" style="color:#ef4444">Needs {{ $exam->total_marks }} TK</div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
