@@ -2,6 +2,13 @@
     <x-slot name="header">Earnings & Withdrawals</x-slot>
     <x-slot name="subheader">Track your evaluation earnings and request withdrawals.</x-slot>
 
+    @if(session('success'))
+        <div class="alert alert-success">✅ {{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-error">❌ {{ session('error') }}</div>
+    @endif
+
     <div class="grid-2">
         <div class="card">
             <div class="card-body" style="padding: 30px;">

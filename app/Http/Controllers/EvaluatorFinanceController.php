@@ -21,17 +21,15 @@ class EvaluatorFinanceController extends Controller
 
     public function withdraw(Request $request)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:100',
-            'method' => 'required|in:bkash,nagad,dbbl',
-            'account_number' => 'required|string|max:50',
-        ]);
-
         $user = auth()->user();
 
-        if ($user->balance < $request->amount) {
-            return back()->with('error', 'Insufficient balance for this withdrawal.');
-        }
+        $request->validate([
+            'amount' => 'required|numeric|min:100|max:' . $user->balance,
+            'method' => 'required|in:bkash,nagad,dbbl',
+            'account_number' => 'required|string|max:50',
+        ], [
+            'amount.max' => 'You cannot withdraw more than your available balance (৳' . number_format($user->balance, 2) . ').'
+        ]);
 
         // Deduct balance and create withdrawal request
         $user->decrement('balance', $request->amount);
