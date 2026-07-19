@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EvalFlow — A modern, role-based examination and evaluation management system. Streamline exam creation, student submissions, and evaluator grading.">
-    <title>EvalFlow — Modern Examination Evaluation System</title>
+    <meta name="description" content="EvalFlow — A modern examination platform for students. Top up your wallet, take exams, and get transparent per-question feedback.">
+    <title>EvalFlow — The Modern Exam Platform for Students</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -505,8 +505,8 @@
     </a>
     <div class="navbar-links">
         <a href="#features" class="nav-link">Features</a>
-        <a href="#roles" class="nav-link">Roles</a>
-        <a href="#how-it-works" class="nav-link">How it Works</a>
+        <a href="#roles" class="nav-link">Platform</a>
+        <a href="#how-it-works" class="nav-link">How to Start</a>
         @auth
             <a href="{{ url('/dashboard') }}" class="btn-nav">Go to Dashboard →</a>
         @else
